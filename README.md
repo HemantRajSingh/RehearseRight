@@ -2,6 +2,8 @@
 
 AI-based emotion recognition and feedback tool for public speaking training
 
+![RehearseRight - HomePage](image.png)
+
 ## Features
 
 - Real-time facial expression analysis
