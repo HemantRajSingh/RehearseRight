@@ -2,39 +2,31 @@ import librosa
 import numpy as np
 from io import BytesIO
 import logging
-from transformers import Wav2Vec2ForSequenceClassification, Wav2Vec2Processor
-import torch
+import tensorflow as tf
+import tensorflow_hub as hub
 
 logger = logging.getLogger(__name__)
 
 class VoiceAnalyzer:
     def __init__(self):
-        # Load pretrained audio classification model and processor
-        self.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
-        self.model = Wav2Vec2ForSequenceClassification.from_pretrained(
-            "superb/wav2vec2-base-superb-ks"
+        # Load a pretrained audio classification model from TensorFlow Hub
+        self.model = hub.load("https://tfhub.dev/google/yamnet/1")  # YAMNet for audio classification
+        self.labels_path = tf.keras.utils.get_file(
+            'yamnet_class_map.csv',
+            'https://storage.googleapis.com/audioset/yamnet_class_map.csv'
         )
-        self.labels = [
-            "silence",
-            "unknown",
-            "yes",
-            "no",
-            "up",
-            "down",
-            "left",
-            "right",
-            "on",
-            "off",
-            "stop",
-            "go",
-        ]  # Sample labels for the model
+        self.labels = self._load_labels()
+
+    def _load_labels(self):
+        with open(self.labels_path, "r") as file:
+            return [line.strip().split(",")[1] for line in file.readlines()[1:]]
 
     async def analyze_audio(self, audio_data: bytes) -> dict:
         try:
-            # Load audio data for analysis
+            # Load and preprocess audio data for librosa-based feature extraction
             y, sr = librosa.load(BytesIO(audio_data), sr=None)
             
-            # Feature extraction for metrics
+            # Extract features: MFCCs, spectral centroid, RMS
             mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
             spectral_centroids = librosa.feature.spectral_centroid(y=y, sr=sr)
             rms = librosa.feature.rms(y=y)
@@ -49,14 +41,17 @@ class VoiceAnalyzer:
                 "volume": min(max(volume, 0), 100)
             }
 
-            # Prepare audio data for classification
-            inputs = self.processor(y, sampling_rate=sr, return_tensors="pt", padding=True)
+            # Preprocess audio for YAMNet model
+            waveform = tf.convert_to_tensor(y, dtype=tf.float32)
+            if sr != 16000:
+                waveform = tf.audio.resample(waveform, sr, 16000)
             
-            with torch.no_grad():
-                logits = self.model(**inputs).logits
+            waveform = tf.expand_dims(waveform, axis=0)  # Add batch dimension
             
-            predicted_ids = torch.argmax(logits, dim=-1)
-            predicted_label = self.labels[predicted_ids[0].item()]
+            # Get model predictions
+            scores, embeddings, spectrogram = self.model(waveform)
+            top_class = tf.argmax(scores[0]).numpy()
+            predicted_label = self.labels[top_class]
             
             metrics["classification"] = predicted_label
             
@@ -65,3 +60,4 @@ class VoiceAnalyzer:
         except Exception as e:
             logger.error(f"Error analyzing audio: {str(e)}")
             return {"clarity": 0, "pace": 0, "volume": 0, "classification": "error"}
+
