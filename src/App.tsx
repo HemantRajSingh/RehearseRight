@@ -82,7 +82,7 @@ function App() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">RehearseRight</h1>
+          <h1 className="text-2xl font-bold">Rehearse Right</h1>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
