@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface AnalysisSummaryProps {
-  emotions: { label: string; probability: number }[];
+  emotions: { label: string; probability: number };
   voiceMetrics: {
     clarity: number;
     pace: number;
@@ -26,7 +26,7 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
     const feedback = [];
 
     // Emotion feedback
-    const dominantEmotion = emotions[0];
+    const dominantEmotion = emotions;
     if (dominantEmotion?.label === 'Happy' || dominantEmotion?.label === 'Neutral') {
       feedback.push({
         type: 'positive',
@@ -54,7 +54,7 @@ export const AnalysisSummary: React.FC<AnalysisSummaryProps> = ({
     }
 
     // Sentiment feedback
-    if (sentiment.score > 0.6) {
+    if (sentiment.label == 'Positive' || sentiment.label == 'Neutral') {
       feedback.push({
         type: 'positive',
         message: 'Your content maintains a positive and engaging tone.',

@@ -10,3 +10,5 @@ transformers==4.38.2
 librosa==0.10.1
 pillow==10.2.0
 scikit-learn==1.4.1.post1
+pydub==0.25.1
+deepface==0.0.93

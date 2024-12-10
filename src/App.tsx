@@ -17,11 +17,19 @@ function App() {
   const [showSummary, setShowSummary] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [expressions, setExpressions] = useState([
-    { label: 'Happy', probability: 0 },
-    { label: 'Neutral', probability: 0 },
-    { label: 'Concerned', probability: 0 },
-    { label: 'Serious', probability: 0 }
+    { label: 'angry', probability: 0 },
+    { label: 'disgust', probability: 0 },
+    { label: 'fear', probability: 0 },
+    { label: 'happy', probability: 0 },
+    { label: 'neutral', probability: 0 },
+    { label: 'sad', probability: 0 },
+    { label: 'surprise', probability: 0 },
   ]);
+
+  const [dominantExpression, setDominantExpression] = useState({
+    label: 'N/A', probability: 0
+  });
+
   const [voiceMetrics, setVoiceMetrics] = useState({
     clarity: 0,
     pace: 0,
@@ -29,7 +37,7 @@ function App() {
   });
   const [sentiment, setSentiment] = useState({
     score: 0,
-    label: 'Neutral'
+    label: 'N/A'
   });
 
   const webcamRef = useRef<Webcam>(null);
@@ -39,7 +47,9 @@ function App() {
   const { connect, disconnect, sendMessage } = useWebSocket({
     onMessage: (data) => {
       if (data.type === 'emotions') {
-        setExpressions(data.data);
+        // setExpressions(data.data);
+        updateExpressions(data.data);
+        // console.log("emotion data", data.data);
       } else if (data.type === 'voice') {
         setVoiceMetrics(data.data);
       } else if (data.type === 'sentiment') {
@@ -78,6 +88,34 @@ function App() {
     setShowSummary(true);
   }, [disconnect, stopRecognition]);
 
+  const capitalCase = (text) => {
+    return String(text).charAt(0).toUpperCase() + String(text).slice(1);
+  }
+
+  const updateExpressions = (data) => {
+    // updating the dominant expression
+    setDominantExpression({
+      label: capitalCase(data[0]?.label),
+      probability: data[0]?.probability
+    });
+
+    // updating other probable expressions
+    const emotions = data[0]?.emotions;
+
+    const updatedExpressions = Object.keys(emotions).map((emotion) => {
+      return {
+        label: emotion,
+        probability: emotions[emotion],
+      };
+    });
+
+    setExpressions((prevExpressions) => {
+      return updatedExpressions.map((expr) => {
+        return expr;
+      });
+    });
+  };  
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
@@ -106,7 +144,8 @@ function App() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <ExpressionAnalysis 
             expressions={expressions}
-            currentEmotion={expressions[0]?.label || 'Neutral'}
+            currentEmotion={dominantExpression}
+            capitalize={capitalCase}
           />
           <VoiceAnalysis metrics={voiceMetrics} />
           <SentimentAnalysis {...sentiment} />
@@ -119,7 +158,7 @@ function App() {
 
         {showSummary && (
           <AnalysisSummary
-            emotions={expressions}
+            emotions={dominantExpression}
             voiceMetrics={voiceMetrics}
             sentiment={sentiment}
             onClose={() => setShowSummary(false)}

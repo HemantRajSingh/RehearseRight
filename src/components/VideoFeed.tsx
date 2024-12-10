@@ -11,7 +11,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ isRecording, webcamRef }) 
     <div className="relative rounded-xl overflow-hidden bg-gray-900">
       <Webcam
         ref={webcamRef}
-        audio={true}
+        audio={false}
         className="w-full rounded-xl"
         mirrored={true}
         videoConstraints={{

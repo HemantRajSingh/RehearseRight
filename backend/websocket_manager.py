@@ -29,6 +29,7 @@ class WebSocketManager:
         try:
             if data["type"] == "frame":
                 emotions = await self.emotion_detector.detect_emotions(data["data"])
+                # print("Emotion", data["data"]);
                 await websocket.send_json({
                     "type": "emotions",
                     "data": emotions
