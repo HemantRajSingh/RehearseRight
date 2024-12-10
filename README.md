@@ -9,6 +9,7 @@ AI-based emotion recognition and feedback tool for public speaking training
 - Real-time facial expression analysis
 - Voice tone analysis (clarity, pace, volume)
 - Speech sentiment analysis
+- Speech-to-text
 - Live feedback and post-presentation summary
 - Beautiful, responsive UI
 
